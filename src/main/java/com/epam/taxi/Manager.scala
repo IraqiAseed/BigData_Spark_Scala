@@ -5,6 +5,8 @@ import com.epam.taxi.service.Utils
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.rdd.RDD
+import org.apache.spark.storage.StorageLevel
+
 import java.lang.Long.parseLong
 
 object Manager {
@@ -25,16 +27,23 @@ object Manager {
 
     val trips: RDD[Trip] =
       tripsLines.map((line: String) => line.split(" "))
-        .map((arg: Array[String]) => Trip(parseLong(arg(0).trim), arg(1).trim, arg(2).trim.toInt))
+        .map((arg: Array[String]) => Trip(driverId = parseLong(arg(0).trim), location = arg(1).trim, km = arg(2).trim.toInt))
+
+    tripsLines.persist(StorageLevel.MEMORY_AND_DISK) //it is like tripsLines = tripsLines.persist( ...)
 
     val drivers: RDD[Driver] =
       driversLines.map((line: String) => line.split(","))
-        .map((arg: Array[String]) => Driver(parseLong(arg(0).trim), arg(1).trim, arg(2).trim, arg(3).trim))
+        .map((arg: Array[String]) => Driver(id=parseLong(arg(0).trim), name=arg(1).trim, address=arg(2).trim, email=arg(3).trim))
 
-    val amountOfTripsToBostonLongerThanTenKm: Long = Utils.getAmountOfTripsToBostonLongerThanTenKm(trips)
+    driversLines.persist(StorageLevel.MEMORY_AND_DISK)
+
+    val bostonRdd: RDD[Trip] = trips.filter(_.location.equalsIgnoreCase("boston"))
+      .persist(StorageLevel.MEMORY_AND_DISK)
+
+    val amountOfTripsToBostonLongerThanTenKm: Long = Utils.getAmountOfTripsLongerThanTenKm(bostonRdd)
     println(s"amount of trips to Boston longer than 10 km: $amountOfTripsToBostonLongerThanTenKm")
 
-    val sumOfAllKmTripsToBoston: Long = Utils.getSumOfAllKmTripsToBoston(trips)
+    val sumOfAllKmTripsToBoston: Double = Utils.getSumOfAllKmTrips(bostonRdd)
     println(s"sum of all km trips to Boston: $sumOfAllKmTripsToBoston")
 
     val ThreeDriversWithMaxTotalKm: List[String] = Utils.getThreeDriversWithMaxTotalKm(trips, drivers)

@@ -6,14 +6,13 @@ import scala.collection.mutable
 
 object Utils {
 
-  def getAmountOfTripsToBostonLongerThanTenKm(trips: RDD[Trip]): Long = {
-    trips.filter(trip => trip.location.equalsIgnoreCase("boston"))
-      .filter(trip => trip.km > 10).count
+  def getAmountOfTripsLongerThanTenKm(trips: RDD[Trip]): Long = {
+    trips
+      .filter(_.km > 10).count
   }
 
-  def getSumOfAllKmTripsToBoston(trips: RDD[Trip]): Long = {
-    trips.filter(trip => trip.location.equalsIgnoreCase("boston"))
-      .map(trip => trip.km).reduce(Integer.sum)
+  def getSumOfAllKmTrips(trips: RDD[Trip]): Double = {
+    trips.map(_.km).sum()
   }
 
   private def getPairsTripIdAndKm(trips: RDD[Trip]): RDD[(Long, Int)] = {
@@ -36,13 +35,13 @@ object Utils {
 
   def performanceInfo(trips: RDD[Trip]): Unit = {
 
-    val tripsLessThanFiveKm: Long = trips.filter(trip => trip.km < 5).count
+    val tripsLessThanFiveKm: Long = trips.filter(_.km < 5).count
     println(s"trips less than five km: $tripsLessThanFiveKm")
 
-    val tripsBetweenFiveAndTenKmBothIncluded: Long = trips.filter(trip => trip.km >= 5).filter(trip => trip.km <= 10).count
+    val tripsBetweenFiveAndTenKmBothIncluded: Long = trips.filter(trip => trip.km >= 5).filter(_.km <= 10).count
     println(s"trips between five and ten km both included: $tripsBetweenFiveAndTenKmBothIncluded")
 
-    val tripsGreaterThanTenKm: Long = trips.filter(trip => trip.km > 10).count
+    val tripsGreaterThanTenKm: Long = trips.filter(_.km > 10).count
     println(s"trips greater than 10 km: $tripsGreaterThanTenKm")
 
     val tripsMap: mutable.HashMap[String, Long] = new mutable.HashMap[String, Long]
